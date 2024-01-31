@@ -1,1 +1,46 @@
-# zsh completion function for abbreviations
+#compdef code
+
+_delimiter_completions() {
+	local origPrefix="$PREFIX"
+	# Insert '-' between ALL letters and try
+	PREFIX=${${PREFIX///-}:1}
+	_path_files -M 'm:-=_ m:-=\  r:?||{-_ }=*'
+	PREFIX="$origPrefix"
+}
+
+_case_completions() {
+	local origPrefix="$PREFIX"
+	PREFIX=${PREFIX::1}${${PREFIX:1}:u}
+	_path_files -M "r:|{[:upper:]}=*"
+	PREFIX=${origPrefix:u}
+	_path_files -M "r:|{[:upper:]}=*"
+	PREFIX="$origPrefix"
+}
+
+_code_short_form_completions() {
+	_delimiter_completions
+	if [[ $PREFIX == ${PREFIX:l} && $#PREFIX > 1 ]]; then
+		_case_completions
+	fi
+}
+
+_code_path_files() {
+	local matcher="r:?||{-_ }=*"
+	if [[ $#PREFIX > 1 ]]; then
+		matcher="${matcher} r:|{[:upper:]}=*"
+	fi
+	_path_files -M $matcher
+}
+
+_code_files() {
+	_alternative \
+		"files:file:_code_path_files" \
+		"shortforms:short form search:_code_short_form_completions"
+}
+
+_code() {
+	_arguments -s : \
+		"*::file:_code_files"
+}
+
+_code "$@"
